@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import PunchCard from './components/PunchCard';
 import QRCodeDisplay from './components/QRCodeDisplay';
@@ -918,84 +918,104 @@ function App() {
     });
   };
 
+  const location = useLocation();
+
   return (
-    <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
-      <Routes>
-        <Route path="/" element={
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      backgroundColor: '#FFFFFF',
+      color: '#1C1C1E',
+      fontFamily: 'sans-serif',
+      boxSizing: 'border-box'
+    }}>
+      {location.pathname === '/' && (
+        <>
           <div style={{
+            textAlign: 'center',
+            padding: '1rem 0.75rem',
+            flexShrink: 0
+          }}>
+            <h2 style={{
+                fontSize: '0.75rem', 
+                letterSpacing: '0.1em', 
+                color: '#3C3C3E',
+                textTransform: 'uppercase',
+                fontWeight: '600', 
+                marginBottom: '0.25rem' 
+              }}>UFOGER Loyalty System</h2>
+            <h1 style={{ 
+                fontSize: '1.5rem',
+                fontWeight: 'bold', 
+                color: '#1C1C1E'
+              }}>Admin Panel</h1>
+          </div>
+          <main style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            flexGrow: 1,
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '100vh',
-            backgroundColor: '#FFFFFF',
-            color: '#1C1C1E',
-            fontFamily: 'sans-serif',
-            boxSizing: 'border-box'
+            overflow: 'hidden'
           }}>
-            <div style={{
-              textAlign: 'center',
-              padding: '1rem 0.75rem',
-              flexShrink: 0
-            }}>
-              <h2 style={{
-                  fontSize: '0.75rem', 
-                  letterSpacing: '0.1em', 
-                  color: '#3C3C3E',
-                  textTransform: 'uppercase',
-                  fontWeight: '600', 
-                  marginBottom: '0.25rem' 
-                }}>UFOGER Loyalty System</h2>
-              <h1 style={{ 
-                  fontSize: '1.5rem',
-                  fontWeight: 'bold', 
-                  color: '#1C1C1E'
-                }}>Admin Panel</h1>
-            </div>
-            <main style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden'
-            }}>
-              <MainAppContent
-                isAdminUnlocked={isAdminUnlocked}
-                pinInput={pinInput}
-                handlePinInputChange={handlePinInputChange}
-                handlePinSubmit={handlePinSubmit}
-                handleLockAdmin={handleLockAdmin}
-                customerPhoneNumber={customerPhoneNumber}
-                handlePhoneNumberChange={handlePhoneNumberChange}
-                customerNameInput={customerNameInput}
-                handleCustomerNameChange={handleCustomerNameChange}
-                loadCustomerData={loadCustomerData}
-                isLoadingCustomer={isLoadingCustomer}
-                activeCustomerData={activeCustomerData}
-                currentPunches={currentPunches}
-                totalPunches={totalPunches}
-                isRewardAvailable={isRewardAvailable}
-                addPunch={addPunch}
-                isSavingPunch={isSavingPunch}
-                handleGeneratePunchQrCode={handleGeneratePunchQrCode}
-                redeemReward={redeemReward}
-                isRedeemingReward={isRedeemingReward}
-                feedbackMessage={feedbackMessage}
-                isPunchQrModalOpen={isPunchQrModalOpen}
-                actionableQrUrl={actionableQrUrl}
-                setIsPunchQrModalOpen={setIsPunchQrModalOpen}
-                matchingCustomers={matchingCustomers}
-                showMatchModal={showMatchModal}
-                setShowMatchModal={setShowMatchModal}
-                customers={allCustomers}
-                onSelectCustomerByLast4={handleSelectCustomerByLast4}
-              />
-            </main>
-          </div>
-        } />
-        <Route path="customer" element={<CustomerPage />} />
-        <Route path="claim" element={<ClaimPunchPage />} />
-      </Routes>
-    </Suspense>
+            <Suspense fallback={
+              <div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>
+            }>
+              <Routes>
+                <Route path="/" element={
+                  <MainAppContent
+                    isAdminUnlocked={isAdminUnlocked}
+                    pinInput={pinInput}
+                    handlePinInputChange={handlePinInputChange}
+                    handlePinSubmit={handlePinSubmit}
+                    handleLockAdmin={handleLockAdmin}
+                    customerPhoneNumber={customerPhoneNumber}
+                    handlePhoneNumberChange={handlePhoneNumberChange}
+                    customerNameInput={customerNameInput}
+                    handleCustomerNameChange={handleCustomerNameChange}
+                    loadCustomerData={loadCustomerData}
+                    isLoadingCustomer={isLoadingCustomer}
+                    activeCustomerData={activeCustomerData}
+                    currentPunches={currentPunches}
+                    totalPunches={totalPunches}
+                    isRewardAvailable={isRewardAvailable}
+                    addPunch={addPunch}
+                    isSavingPunch={isSavingPunch}
+                    handleGeneratePunchQrCode={handleGeneratePunchQrCode}
+                    redeemReward={redeemReward}
+                    isRedeemingReward={isRedeemingReward}
+                    feedbackMessage={feedbackMessage}
+                    isPunchQrModalOpen={isPunchQrModalOpen}
+                    actionableQrUrl={actionableQrUrl}
+                    setIsPunchQrModalOpen={setIsPunchQrModalOpen}
+                    matchingCustomers={matchingCustomers}
+                    showMatchModal={showMatchModal}
+                    setShowMatchModal={setShowMatchModal}
+                    customers={allCustomers}
+                    onSelectCustomerByLast4={handleSelectCustomerByLast4}
+                  />
+                } />
+              </Routes>
+            </Suspense>
+          </main>
+        </>
+      )}
+      {location.pathname === '/claim' && (
+        <main style={{ width: '100%', flexGrow: 1 }}>
+          <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
+            <ClaimPunchPage />
+          </Suspense>
+        </main>
+      )}
+      {location.pathname === '/customer' && (
+        <main style={{ width: '100%', flexGrow: 1 }}>
+          <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
+            <CustomerPage />
+          </Suspense>
+        </main>
+      )}
+    </div>
   );
 }
 
