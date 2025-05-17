@@ -5,7 +5,6 @@ import PunchCard from './components/PunchCard';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import { db } from './firebaseConfig';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, getDocs, query, where } from "firebase/firestore";
-import { usePushNotifications } from './components/usePushNotifications';
 
 const ClaimPunchPage = lazy(() => import('./components/ClaimPunchPage'));
 const CustomerRecords = lazy(() => import('./components/CustomerRecords'));
@@ -41,8 +40,6 @@ const AdminPanel = ({
 
   const [last4, setLast4] = React.useState("");
   const [matchingCustomers, setMatchingCustomers] = React.useState([]);
-
-  const push = usePushNotifications();
 
   React.useEffect(() => {
     if (/^\d{4}$/.test(last4) && customers && customers.length > 0) {
@@ -163,13 +160,6 @@ const AdminPanel = ({
             </div>
           )}
         </div>
-        {push.isSupported && !push.isSubscribed && (
-          <button onClick={push.subscribe} style={{marginBottom:8,background:'#007bff',color:'#fff',padding:8,borderRadius:6,border:'none',width:'100%',cursor:'pointer'}}>Enable Push Notifications</button>
-        )}
-        {push.isSupported && push.isSubscribed && (
-          <button onClick={push.sendTestNotification} style={{marginBottom:8,background:'#28a745',color:'#fff',padding:8,borderRadius:6,border:'none',width:'100%',cursor:'pointer'}}>Send Test Notification</button>
-        )}
-        {push.error && <div style={{color:'red',fontSize:13,marginBottom:8}}>{push.error}</div>}
       </div>
 
       {activeCustomerData && (
