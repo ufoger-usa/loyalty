@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/loyalty_app/', // Set base path for GitHub Pages
+  base: '/', // Set base path for Netlify/static hosting
   build: {
     outDir: 'dist', // Change output directory to 'dist' for GitHub Actions deployment
     rollupOptions: {

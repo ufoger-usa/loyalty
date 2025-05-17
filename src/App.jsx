@@ -4,7 +4,8 @@ import './App.css';
 import PunchCard from './components/PunchCard';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import { db } from './firebaseConfig';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, getDocs, query, where } from "firebase/firestore";
+import { usePushNotifications } from './components/usePushNotifications';
 
 const ClaimPunchPage = lazy(() => import('./components/ClaimPunchPage'));
 const CustomerRecords = lazy(() => import('./components/CustomerRecords'));
@@ -29,12 +30,27 @@ const AdminPanel = ({
   handleGeneratePunchQrCode,
   redeemReward,
   isRedeemingReward,
-  feedbackMessage
+  feedbackMessage,
+  customers,
+  onSelectCustomerByLast4
 }) => {
   const customerPageUrl =
     window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? window.location.origin + (import.meta.env.BASE_URL || '/') + 'customer'
       : 'https://ufoger-usa.github.io/loyalty_app/customer';
+
+  const [last4, setLast4] = React.useState("");
+  const [matchingCustomers, setMatchingCustomers] = React.useState([]);
+
+  const push = usePushNotifications();
+
+  React.useEffect(() => {
+    if (/^\d{4}$/.test(last4) && customers && customers.length > 0) {
+      setMatchingCustomers(customers.filter(c => c.id && c.id.slice(-4) === last4));
+    } else {
+      setMatchingCustomers([]);
+    }
+  }, [last4, customers]);
 
   return (
     <div style={{
@@ -121,23 +137,39 @@ const AdminPanel = ({
         >
           {isLoadingCustomer ? "Loading..." : "Load/Create"}
         </button>
-      </div>
-
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #D1D1D6',
-        borderRadius: '1rem',
-        padding: '1.5rem',
-        marginBottom: '1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)'
-      }}>
-        <h4 style={{ margin: 0, marginBottom: 8, fontSize: '1rem', color: '#1C1C1E' }}>Customer Self-Service QR</h4>
-        <QRCodeDisplay value={customerPageUrl} size={140} />
-        <div style={{ fontSize: 12, color: '#888', marginTop: 8, wordBreak: 'break-all', textAlign: 'center' }}>{customerPageUrl}</div>
-        <div style={{ fontSize: 13, color: '#007bff', marginTop: 8, textAlign: 'center' }}>Let customers scan this QR code to access the public punch/sign page.</div>
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            type="text"
+            value={last4}
+            onChange={e => setLast4(e.target.value.replace(/[^\d]/g, '').slice(0,4))}
+            placeholder="Find by last 4 digits"
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #D1D1D6',
+              marginBottom: '0.5rem',
+              boxSizing: 'border-box'
+            }}
+          />
+          {matchingCustomers.length > 0 && (
+            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Select customer:</div>
+              {matchingCustomers.map(c => (
+                <button key={c.id} onClick={() => onSelectCustomerByLast4(c)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: 6, border: 'none', background: '#fff', borderRadius: 4, marginBottom: 4, cursor: 'pointer' }}>
+                  {c.name || 'N/A'} <span style={{ color: '#007bff' }}>({c.id})</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {push.isSupported && !push.isSubscribed && (
+          <button onClick={push.subscribe} style={{marginBottom:8,background:'#007bff',color:'#fff',padding:8,borderRadius:6,border:'none',width:'100%',cursor:'pointer'}}>Enable Push Notifications</button>
+        )}
+        {push.isSupported && push.isSubscribed && (
+          <button onClick={push.sendTestNotification} style={{marginBottom:8,background:'#28a745',color:'#fff',padding:8,borderRadius:6,border:'none',width:'100%',cursor:'pointer'}}>Send Test Notification</button>
+        )}
+        {push.error && <div style={{color:'red',fontSize:13,marginBottom:8}}>{push.error}</div>}
       </div>
 
       {activeCustomerData && (
@@ -252,7 +284,12 @@ const MainAppContent = ({
   feedbackMessage,
   isPunchQrModalOpen,
   actionableQrUrl,
-  setIsPunchQrModalOpen
+  setIsPunchQrModalOpen,
+  matchingCustomers,
+  showMatchModal,
+  setShowMatchModal,
+  customers,
+  onSelectCustomerByLast4
 }) => {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
@@ -306,6 +343,8 @@ const MainAppContent = ({
               redeemReward={redeemReward}
               isRedeemingReward={isRedeemingReward}
               feedbackMessage={feedbackMessage}
+              customers={customers}
+              onSelectCustomerByLast4={onSelectCustomerByLast4}
             />
           </div>
           <div style={{
@@ -321,6 +360,29 @@ const MainAppContent = ({
             </Suspense>
           </div>
         </div>
+
+        {showMatchModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }} onClick={() => setShowMatchModal(false)}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 24, minWidth: 320, maxWidth: 400, boxShadow: '0 2px 8px #0002' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{marginTop:0}}>Select Customer</h3>
+              <ul style={{listStyle:'none',padding:0,margin:0}}>
+                {matchingCustomers.map(c => (
+                  <li key={c.id} style={{marginBottom:12}}>
+                    <button style={{width:'100%',padding:10,borderRadius:6,border:'1px solid #ccc',background:'#f5f5f5',cursor:'pointer'}} onClick={() => {
+                      setCustomerPhoneNumber(c.id);
+                      setCustomerNameInput(c.name || "");
+                      setShowMatchModal(false);
+                      setTimeout(() => loadCustomerData(), 100); // re-trigger load
+                    }}>{c.name || 'N/A'} - {c.id}</button>
+                  </li>
+                ))}
+              </ul>
+              <button style={{marginTop:16,background:'#eee',padding:8,borderRadius:6,border:'none',width:'100%',cursor:'pointer'}} onClick={() => setShowMatchModal(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
 
         {isPunchQrModalOpen && actionableQrUrl && (
           <div 
@@ -468,6 +530,12 @@ function App() {
   const [actionableQrUrl, setActionableQrUrl] = useState("");
   const [isPunchQrModalOpen, setIsPunchQrModalOpen] = useState(false);
 
+  const [matchingCustomers, setMatchingCustomers] = useState([]);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+
+  const [customers, setCustomers] = useState([]);
+  const [allCustomers, setAllCustomers] = useState([]);
+
   const unsubscribeCustomerListenerRef = useRef(null);
 
   useEffect(() => {
@@ -489,6 +557,28 @@ function App() {
         unsubscribeCustomerListenerRef.current();
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      const q = query(collection(db, "customers"));
+      const snapshot = await getDocs(q);
+      const allCustomers = [];
+      snapshot.forEach(docSnap => {
+        allCustomers.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setCustomers(allCustomers);
+    };
+    fetchCustomers();
+  }, []);
+
+  useEffect(() => {
+    // Listen to all customers for last-4 search
+    const q = query(collection(db, 'customers'));
+    const unsub = onSnapshot(q, (snap) => {
+      setAllCustomers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
   }, []);
 
   const showFeedback = (text, type = "info") => {
@@ -642,6 +732,100 @@ function App() {
       return;
     }
 
+    // If input is exactly 4 digits, search for all customers ending with those digits
+    if (/^\d{4}$/.test(phoneNumber)) {
+      setIsLoadingCustomer(true);
+      setFeedbackMessage({ text: "", type: "" });
+      const q = query(collection(db, "customers"));
+      const snapshot = await getDocs(q);
+      const matches = [];
+      snapshot.forEach(docSnap => {
+        if (docSnap.id.slice(-4) === phoneNumber) {
+          matches.push({ id: docSnap.id, ...docSnap.data() });
+        }
+      });
+      setIsLoadingCustomer(false);
+      if (matches.length === 0) {
+        showFeedback("No customers found with those last 4 digits.", "error");
+        return;
+      } else if (matches.length === 1) {
+        setCustomerPhoneNumber(matches[0].id);
+        setCustomerNameInput(matches[0].name || "");
+        // Continue as if full phone entered
+        if (unsubscribeCustomerListenerRef.current) {
+          unsubscribeCustomerListenerRef.current();
+          unsubscribeCustomerListenerRef.current = null;
+        }
+        setIsLoadingCustomer(true);
+        setFeedbackMessage({ text: "", type: "" });
+        const customerId = matches[0].id;
+        const customerRef = doc(db, "customers", customerId);
+        try {
+          unsubscribeCustomerListenerRef.current = onSnapshot(customerRef, async (docSnap) => {
+            setIsLoadingCustomer(false);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              const customerData = {
+                id: docSnap.id,
+                punches: data.punches || 0,
+                name: data.name || "",
+                lastRewardRedeemedAt: data.lastRewardRedeemedAt,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                totalRedemptions: data.totalRedemptions || 0
+              };
+              setActiveCustomerData(customerData);
+
+              if (nameToSave && nameToSave !== data.name) {
+                await setDoc(customerRef, { name: nameToSave, updatedAt: serverTimestamp() }, { merge: true });
+                showFeedback("Customer name updated.", "success");
+              } else if (!data.name && nameToSave) {
+                await setDoc(customerRef, { name: nameToSave, updatedAt: serverTimestamp() }, { merge: true });
+                showFeedback("Customer name added.", "success");
+              } else {
+                showFeedback(`Customer ${data.name || customerId} loaded.`, "info");
+              }
+
+            } else {
+              const newCustomerData = {
+                id: customerId,
+                punches: 0,
+                name: nameToSave,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                lastRewardRedeemedAt: null,
+                totalRedemptions: 0
+              };
+              await setDoc(customerRef, newCustomerData);
+              showFeedback(`New customer ${nameToSave || customerId} created.`, "success");
+            }
+          }, (error) => {
+            console.error("Error in Firestore listener:", error);
+            showFeedback("Error listening to customer data. Try reloading.", "error");
+            setIsLoadingCustomer(false);
+            if (unsubscribeCustomerListenerRef.current) {
+              unsubscribeCustomerListenerRef.current();
+              unsubscribeCustomerListenerRef.current = null;
+            }
+          });
+
+        } catch (error) {
+          console.error("Error loading or creating customer data:", error);
+          showFeedback("Error accessing customer data. Please try again.", "error");
+          setIsLoadingCustomer(false);
+          if (unsubscribeCustomerListenerRef.current) {
+            unsubscribeCustomerListenerRef.current();
+            unsubscribeCustomerListenerRef.current = null;
+          }
+        }
+        return;
+      } else {
+        setMatchingCustomers(matches);
+        setShowMatchModal(true);
+        return;
+      }
+    }
+
     if (unsubscribeCustomerListenerRef.current) {
       unsubscribeCustomerListenerRef.current();
       unsubscribeCustomerListenerRef.current = null;
@@ -713,6 +897,27 @@ function App() {
     }
   }, [customerPhoneNumber, customerNameInput, unsubscribeCustomerListenerRef]);
 
+  const onSelectCustomerByLast4 = (customer) => {
+    setCustomerPhoneNumber(customer.id);
+    setCustomerNameInput(customer.name || "");
+    setTimeout(() => loadCustomerData(), 100); // re-trigger load
+  };
+
+  const handleSelectCustomerByLast4 = (customer) => {
+    setCustomerPhoneNumber(customer.id);
+    setCustomerNameInput(customer.name || "");
+    // Load customer data into panel
+    setActiveCustomerData({
+      id: customer.id,
+      punches: customer.punches || 0,
+      name: customer.name || "",
+      lastRewardRedeemedAt: customer.lastRewardRedeemedAt,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt,
+      totalRedemptions: customer.totalRedemptions || 0
+    });
+  };
+
   return (
     <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
       <Routes>
@@ -778,6 +983,11 @@ function App() {
                 isPunchQrModalOpen={isPunchQrModalOpen}
                 actionableQrUrl={actionableQrUrl}
                 setIsPunchQrModalOpen={setIsPunchQrModalOpen}
+                matchingCustomers={matchingCustomers}
+                showMatchModal={showMatchModal}
+                setShowMatchModal={setShowMatchModal}
+                customers={allCustomers}
+                onSelectCustomerByLast4={handleSelectCustomerByLast4}
               />
             </main>
           </div>

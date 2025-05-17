@@ -49,10 +49,18 @@ const CustomerRecords = () => {
 
     // Filtering
     if (searchTerm) {
-      processedData = processedData.filter(customer =>
-        customer.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (customer.name && customer.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      const trimmed = searchTerm.trim();
+      // If search is exactly 4 digits, match last 4 digits of phone number (customer.id)
+      if (/^\d{4}$/.test(trimmed)) {
+        processedData = processedData.filter(customer =>
+          customer.id && customer.id.slice(-4) === trimmed
+        );
+      } else {
+        processedData = processedData.filter(customer =>
+          customer.id.toLowerCase().includes(trimmed.toLowerCase()) ||
+          (customer.name && customer.name.toLowerCase().includes(trimmed.toLowerCase()))
+        );
+      }
     }
 
     // Sorting
@@ -124,7 +132,7 @@ const CustomerRecords = () => {
       >Customer Records</h2>
       <input
         type="text"
-        placeholder="Search by Phone or Name..."
+        placeholder="Search by Phone, Name, or Last 4 digits..."
         style={{
           width: '100%',
           padding: '0.5rem', // Tailwind p-2
