@@ -25,9 +25,12 @@ export default defineConfig({
             // All other node_modules will fall into a default vendor chunk
             return 'vendor'; 
           }
-        }
+        },
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       }
     },
-    chunkSizeWarningLimit: 600 // Optional: Slightly increase limit if needed after chunking
+    chunkSizeWarningLimit: 300 // Reduce warning limit for chunk size
   }
 })

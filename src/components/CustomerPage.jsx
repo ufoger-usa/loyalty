@@ -80,7 +80,10 @@ function CustomerPage() {
 
   if (step === 'form') {
     return (
-      <div style={containerStyle}>
+      <div
+        className="customer-main-container"
+        style={containerStyle}
+      >
         <h2 style={{ textAlign: 'center' }}>{BUSINESS_INFO.name}</h2>
         <p style={{ textAlign: 'center', color: '#555' }}>{BUSINESS_INFO.description}</p>
         <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
@@ -101,7 +104,10 @@ function CustomerPage() {
 
   if (step === 'info' && customer) {
     return (
-      <div style={containerStyle}>
+      <div
+        className="customer-main-container"
+        style={containerStyle}
+      >
         <h2 style={{ textAlign: 'center' }}>{BUSINESS_INFO.name}</h2>
         <p style={{ textAlign: 'center', color: '#555' }}>{BUSINESS_INFO.description}</p>
         <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>

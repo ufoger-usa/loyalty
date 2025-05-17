@@ -357,6 +357,14 @@ body {
     margin-right: var(--compact-padding);
     font-size: 0.85rem; /* Adjusted for better readability on mobile */
   }
+
+  .customer-main-container {
+    padding: 3vw 2vw !important;
+    font-size: 1rem !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
 }
 
 /* Tablet-like sizes (optional, if more specific adjustments are needed) */
