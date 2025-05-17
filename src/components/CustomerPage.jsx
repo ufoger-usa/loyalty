@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import PunchCard from './PunchCard';
 
 const BUSINESS_INFO = {
@@ -11,19 +11,12 @@ const BUSINESS_INFO = {
 const TOTAL_PUNCHES = 10;
 
 function CustomerPage() {
-  // DEBUG: CustomerPage loaded
-  useEffect(() => {
-    console.log("[DEBUG] CustomerPage component rendered");
-  }, []);
-
   const [step, setStep] = useState('form');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [punching, setPunching] = useState(false);
 
   useEffect(() => {
     if (customer && customer.name) setName(customer.name);
@@ -32,7 +25,6 @@ function CustomerPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setLoading(true);
     const phoneTrim = phone.trim();
     if (!phoneTrim) {
@@ -47,7 +39,6 @@ function CustomerPage() {
         setCustomer({ id: phoneTrim, ...docSnap.data() });
         setStep('info');
       } else {
-        // New customer, require name
         if (!name.trim()) {
           setError('Please enter your name.');
           setLoading(false);
@@ -65,45 +56,31 @@ function CustomerPage() {
         setCustomer(newCustomer);
         setStep('info');
       }
-    } catch (err) {
+    } catch {
       setError('Error accessing your record. Please try again.');
     }
     setLoading(false);
   };
 
-  const handlePunch = async () => {
-    setError('');
-    setSuccess('');
-    setPunching(true);
-    const customerRef = doc(db, 'customers', customer.id);
-    try {
-      const docSnap = await getDoc(customerRef);
-      if (!docSnap.exists()) {
-        setError('Customer not found.');
-        setPunching(false);
-        return;
-      }
-      const data = docSnap.data();
-      if (data.punches >= TOTAL_PUNCHES) {
-        setError('You have already earned a reward! Please redeem before punching again.');
-        setPunching(false);
-        return;
-      }
-      await setDoc(customerRef, {
-        punches: data.punches + 1,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-      setSuccess('Punch added!');
-      setCustomer({ ...data, punches: data.punches + 1 });
-    } catch (err) {
-      setError('Error adding punch. Please try again.');
-    }
-    setPunching(false);
+  // Responsive container style
+  const containerStyle = {
+    maxWidth: 400,
+    width: '100%',
+    margin: '2rem auto',
+    background: '#fff',
+    borderRadius: 12,
+    boxShadow: '0 2px 8px #0001',
+    padding: '5vw 4vw', // Use relative padding for mobile
+    boxSizing: 'border-box',
+    minHeight: '100vh', // Ensure full height on mobile
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   };
 
   if (step === 'form') {
     return (
-      <div style={{ maxWidth: 400, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 24 }}>
+      <div style={containerStyle}>
         <h2 style={{ textAlign: 'center' }}>{BUSINESS_INFO.name}</h2>
         <p style={{ textAlign: 'center', color: '#555' }}>{BUSINESS_INFO.description}</p>
         <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
@@ -124,7 +101,7 @@ function CustomerPage() {
 
   if (step === 'info' && customer) {
     return (
-      <div style={{ maxWidth: 400, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 24 }}>
+      <div style={containerStyle}>
         <h2 style={{ textAlign: 'center' }}>{BUSINESS_INFO.name}</h2>
         <p style={{ textAlign: 'center', color: '#555' }}>{BUSINESS_INFO.description}</p>
         <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>
