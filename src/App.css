@@ -134,3 +134,35 @@ body {
 .customer-management.compact-section .input-group.compact-input-group {
   display: flex;
   flex-direction: column; /* Stack inputs and button */
+}
+
+.customer-main-container {
+  padding: 8vw 2vw 8vw 2vw !important; /* More top padding for safe area */
+  font-size: 1rem !important;
+  min-width: 0 !important;
+  max-width: 100vw !important;
+  width: 100vw !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow-wrap: break-word !important;
+}
+.customer-main-container form {
+  margin-top: 8px !important;
+}
+.customer-main-container input,
+.customer-main-container button {
+  font-size: 1rem !important;
+  padding: 12px 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 12px !important;
+}
+.customer-main-container button {
+  min-height: 48px !important;
+  border-radius: 8px !important;
+}
+.customer-main-container h2, .customer-main-container p {
+  overflow-wrap: break-word !important;
+}
