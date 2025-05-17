@@ -921,17 +921,17 @@ function App() {
   const location = useLocation();
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      backgroundColor: '#FFFFFF',
-      color: '#1C1C1E',
-      fontFamily: 'sans-serif',
-      boxSizing: 'border-box'
-    }}>
+    <>
       {location.pathname === '/' && (
-        <>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          backgroundColor: '#FFFFFF',
+          color: '#1C1C1E',
+          fontFamily: 'sans-serif',
+          boxSizing: 'border-box'
+        }}>
           <div style={{
             textAlign: 'center',
             padding: '1rem 0.75rem',
@@ -999,23 +999,23 @@ function App() {
               </Routes>
             </Suspense>
           </main>
-        </>
+        </div>
       )}
       {location.pathname === '/claim' && (
-        <main style={{ width: '100%', flexGrow: 1 }}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#fff' }}>
           <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
             <ClaimPunchPage />
           </Suspense>
-        </main>
+        </div>
       )}
       {location.pathname === '/customer' && (
-        <main style={{ width: '100%', flexGrow: 1 }}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#fff' }}>
           <Suspense fallback={<div style={{textAlign: 'center', fontSize: '1.25rem', paddingTop: '2rem'}}>Loading page...</div>}>
             <CustomerPage />
           </Suspense>
-        </main>
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
